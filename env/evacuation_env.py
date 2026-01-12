@@ -172,8 +172,6 @@ class EvacuationEnv(gym.Env):
             if not active:
                 continue
             
-
-            
             old_pos = pos
             old_dist = self._distance_to_nearest_exit(old_pos)
             

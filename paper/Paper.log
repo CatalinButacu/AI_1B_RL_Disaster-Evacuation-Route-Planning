@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2026.1.7)  12 JAN 2026 17:10
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2026.1.7)  12 JAN 2026 18:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -387,11 +387,12 @@ File: Example.png Graphic file (type png)
 Package pdftex.def Info: Example.png  used on input line 159.
 (pdftex.def)             Requested size: 226.79846pt x 180.26561pt.
 [2 <./Example.png>]
-<../outputs/plots/benchmark_all_scenarios.png, id=25, 1002.144pt x 853.5087pt>
-File: ../outputs/plots/benchmark_all_scenarios.png Graphic file (type png)
-<use ../outputs/plots/benchmark_all_scenarios.png>
-Package pdftex.def Info: ../outputs/plots/benchmark_all_scenarios.png  used on 
-input line 174.
+<../outputs/benchmark/benchmark_all_scenarios.png, id=25, 1002.144pt x 853.5087
+pt>
+File: ../outputs/benchmark/benchmark_all_scenarios.png Graphic file (type png)
+<use ../outputs/benchmark/benchmark_all_scenarios.png>
+Package pdftex.def Info: ../outputs/benchmark/benchmark_all_scenarios.png  used
+ on input line 174.
 (pdftex.def)             Requested size: 438.60315pt x 373.5524pt.
 
 Underfull \hbox (badness 2653) in paragraph at lines 236--237
@@ -411,7 +412,7 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[4 <../outputs/plots/benchmark_all_scenarios.png>] (Paper.aux)
+[4 <../outputs/benchmark/benchmark_all_scenarios.png>] (Paper.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
@@ -419,7 +420,7 @@ L3 programming layer <2024-01-04>
  ) 
 Here is how much of TeX's memory you used:
  4439 strings out of 474486
- 71323 string characters out of 5739508
+ 71351 string characters out of 5739508
  1951542 words of memory out of 5000000
  26672 multiletter control sequences out of 15000+600000
  605422 words of font info for 130 fonts, out of 8000000 for 9000
@@ -442,7 +443,7 @@ fb><C:/Users/catalin.butacu/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times
 urw/times/utmbi8a.pfb><C:/Users/catalin.butacu/AppData/Local/Programs/MiKTeX/fo
 nts/type1/urw/times/utmr8a.pfb><C:/Users/catalin.butacu/AppData/Local/Programs/
 MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
-Output written on Paper.pdf (4 pages, 1012079 bytes).
+Output written on Paper.pdf (4 pages, 1012074 bytes).
 PDF statistics:
  91 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

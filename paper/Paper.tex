@@ -171,7 +171,7 @@ Initial experiments showed that agents' survival rates declined during training 
 \end{enumerate}
 
 \begin{figure*}[htbp]
-\centerline{\includegraphics[width=0.85\textwidth]{../outputs/plots/benchmark_all_scenarios.png}}
+\centerline{\includegraphics[width=0.85\textwidth]{../outputs/benchmark/benchmark_all_scenarios.png}}
 \caption{Consolidated Learning Curves across 5,000 episodes. The plots illustrate survival rate dynamics for Q-Learning, Dyna-Q, and Dyna-Q+. Deterministic scenarios show stable convergence, while stochastic environments reveal the adaptability of model-based planning.}
 \label{fig:all_benchmarks}
 \end{figure*}
@@ -205,10 +205,10 @@ Beyond the binary metric of survival, we analyzed the \textbf{Evacuation Efficie
 \hline
 \textbf{Scenario} & \textbf{Random} & \textbf{Q-Learning} & \textbf{Dyna-Q} & \textbf{Dyna-Q+} \\
 \hline
-Flood & 38.2 & 14.1 & 14.0 & 13.9 \\
-Fire & 39.5 & 12.9 & 12.7 & 12.6 \\
-Earthquake & 37.8 & 15.2 & 13.4 & 13.5 \\
-Tornado & 38.9 & 12.9 & 14.2 & 12.6 \\
+Flood & 22.5 & 12.9 & 12.7 & 12.8 \\
+Fire & 17.9 & 13.0 & 13.4 & 13.0 \\
+Earthquake & 22.0 & 11.3 & 12.9 & 12.3 \\
+Tornado & 23.6 & 12.9 & 12.7 & 12.6 \\
 \hline
 \end{tabular}
 \label{tab:efficiency}
