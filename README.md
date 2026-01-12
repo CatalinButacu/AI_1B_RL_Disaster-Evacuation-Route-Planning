@@ -76,7 +76,7 @@ project/
     dyna_q_plus.py      # RL agents (Dyna-Q, Q-learning, SARSA, etc.)
     env/
         evacuation_env.py    # Custom gymnasium environment
-        hazard_dynamics.py   # Hazard scenarios
+        hazard.py   # Hazard scenarios
     outputs/
         models/         # Trained agents (.npz)
         plots/          # Visualizations (.gif)

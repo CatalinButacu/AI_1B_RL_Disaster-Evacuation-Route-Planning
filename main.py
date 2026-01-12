@@ -6,7 +6,7 @@ import argparse
 import os
 
 from env.evacuation_env import EvacuationEnv, make_evacuation_env
-from dyna_q_plus import StandardDynaQ, AGENTS
+from algo import QLearning, DynaQ, AGENTS
 import config
 
 SCENARIOS = ['flood', 'fire', 'earthquake', 'tornado']
@@ -67,7 +67,7 @@ def train(agent, env: EvacuationEnv, num_episodes: int, verbose: bool = True):
         
         episode_rewards.append(total_reward)
         episode_survival.append(survival)
-        agent.decay_epsilon()
+        agent.decay_epsilon(episode, num_episodes)
         
         if verbose and (episode + 1) % config.EVAL_FREQUENCY == 0:
             avg_reward = np.mean(episode_rewards[-config.EVAL_FREQUENCY:])
@@ -76,23 +76,24 @@ def train(agent, env: EvacuationEnv, num_episodes: int, verbose: bool = True):
     
     return episode_rewards, episode_survival
 
-
-def train_scenario(scenario: str, episodes: int = 1000, resume: bool = False):
+def train_scenario(scenario: str, agent_name: str, episodes: int = 1000, resume: bool = False):
     print(f"\n{'='*60}")
-    print(f"TRAINING: {scenario.upper()} | Grid: {config.GRID_SIZE}x{config.GRID_SIZE} | Agents: {config.NUM_AGENTS}")
+    print(f"TRAINING: {scenario.upper()} | Agent: {agent_name} | Grid: {config.GRID_SIZE}x{config.GRID_SIZE}")
     print(f"{'='*60}")
     
     env = make_evacuation_env(scenario=scenario)
-    agent = StandardDynaQ(env.observation_space.n, env.action_space.n)
+    agent_class = AGENTS[agent_name]
+    agent = agent_class(env.observation_space.n, env.action_space.n)
     
-    model_path = f"{config.MODELS_DIR}/agent_{scenario}.npz"
+    model_dir = config.get_models_dir(agent_name)
+    model_path = f"{model_dir}/{agent_name}_{scenario}.npz"
     if resume and os.path.exists(model_path):
         agent.load(model_path)
         print(f"Resumed from: {model_path}")
     
     rewards, survival = train(agent, env, episodes)
     
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    os.makedirs(model_dir, exist_ok=True)
     agent.save(model_path)
     
     final_survival = np.mean(survival[-100:]) if len(survival) >= 100 else np.mean(survival)
@@ -100,9 +101,8 @@ def train_scenario(scenario: str, episodes: int = 1000, resume: bool = False):
     
     return agent, final_survival
 
-
 class EvacuationDemo:
-    def __init__(self, env: EvacuationEnv, agent: StandardDynaQ, scenario: str):
+    def __init__(self, env: EvacuationEnv, agent, scenario: str):
         self.env = env
         self.agent = agent
         self.scenario = scenario
@@ -214,7 +214,8 @@ class EvacuationDemo:
                     patch.set_facecolor(hazard_color)
                     patch.set_edgecolor(hazard_color)
                     patch.set_alpha(0.8)
-                    text.set_text('~~')
+                    char = '🌀' if self.scenario == 'tornado' else '~~'
+                    text.set_text(char)
                     text.set_color('#FFFFFF')
                 else:
                     patch.set_facecolor(COLORS['ground'])
@@ -297,31 +298,34 @@ class EvacuationDemo:
             plt.show()
         plt.close()
 
-
-def demo(scenario: str, live: bool = True):
+def demo(scenario: str, agent_name: str, live: bool = True):
     env = make_evacuation_env(scenario=scenario)
-    agent = StandardDynaQ(env.observation_space.n, env.action_space.n)
+    agent_class = AGENTS[agent_name]
+    agent = agent_class(env.observation_space.n, env.action_space.n)
     
-    model_path = f"{config.MODELS_DIR}/agent_{scenario}.npz"
+    model_dir = config.get_models_dir(agent_name)
+    model_path = f"{model_dir}/{agent_name}_{scenario}.npz"
     if os.path.exists(model_path):
         agent.load(model_path)
         print(f"Loaded: {model_path}")
     else:
         print("No model found. Training first...")
         train(agent, env, 500)
-        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        os.makedirs(model_dir, exist_ok=True)
         agent.save(model_path)
     
     viz = EvacuationDemo(env, agent, scenario)
     if live:
         viz.run()
     else:
-        viz.run(f"{config.PLOTS_DIR}/evacuation_{scenario}.gif")
-
+        plot_dir = config.get_plots_dir(agent_name)
+        os.makedirs(plot_dir, exist_ok=True)
+        viz.run(f"{plot_dir}/evacuation_{scenario}_{agent_name}.gif")
 
 def main():
-    parser = argparse.ArgumentParser(description='Disaster Evacuation Route Planning with Dyna-Q')
-    parser.add_argument('--scenario', type=str, default='flood', choices=SCENARIOS + ['all'])
+    parser = argparse.ArgumentParser(description='Disaster Evacuation Route Planning')
+    parser.add_argument('--scenario', type=str, default='all', choices=SCENARIOS + ['all'])
+    parser.add_argument('--agent', type=str, default='all', choices=list(AGENTS.keys()) + ['all'])
     parser.add_argument('--train', action='store_true', help='Train the agent')
     parser.add_argument('--continue', dest='resume', action='store_true', help='Resume from saved model')
     parser.add_argument('--demo', action='store_true', help='Run visualization demo')
@@ -329,34 +333,34 @@ def main():
     parser.add_argument('--episodes', type=int, default=config.NUM_EPISODES, help='Training episodes')
     args = parser.parse_args()
     
-    if args.train:
-        scenarios = SCENARIOS if args.scenario == 'all' else [args.scenario]
-        results = {}
-        for s in scenarios:
-            _, survival = train_scenario(s, args.episodes, resume=args.resume)
-            results[s] = survival
-        
-        if len(results) > 1:
-            print(f"\n{'='*60}")
-            print("TRAINING SUMMARY")
-            print(f"{'='*60}")
-            for s, surv in results.items():
-                print(f"  {s:12s}: {surv:.1%} survival")
-    
-    if args.demo:
-        scenarios = SCENARIOS if args.scenario == 'all' else [args.scenario]
-        for s in scenarios:
-            demo(s, live=args.live)
-    
-    if not args.train and not args.demo:
-        print("🚨 Disaster Evacuation Route Planning - Dyna-Q 🚨")
-        print(f"\nConfig: {config.GRID_SIZE}x{config.GRID_SIZE} grid, {config.NUM_AGENTS} agents")
-        print("\nUsage:")
-        print("  py main.py --train --episodes 10000 --scenario flood")
-        print("  py main.py --train --continue --episodes 5000")
-        print("  py main.py --demo --scenario flood --live")
-        print("  py main.py --demo --scenario flood")
+    # If no specific mode (train/demo) is requested, default to both
+    do_train = args.train
+    do_demo = args.demo
+    if not do_train and not do_demo:
+        do_train = True
+        do_demo = True
 
+    scenarios = SCENARIOS if args.scenario == 'all' else [args.scenario]
+    agents = list(AGENTS.keys()) if args.agent == 'all' else [args.agent]
+    
+    if do_train:
+        print(f"\nStarting training for {len(agents)} agents across {len(scenarios)} scenarios...")
+        for a_name in agents:
+            results = {}
+            for s in scenarios:
+                _, survival = train_scenario(s, a_name, args.episodes, resume=args.resume)
+                results[s] = survival
+            
+            if len(scenarios) > 1:
+                print(f"\nTraining Results for agent: {a_name}")
+                for s, surv in results.items():
+                    print(f"  {s:12s}: {surv:.1%} survival")
+    
+    if do_demo:
+        print(f"\nStarting demonstrations for {len(agents)} agents across {len(scenarios)} scenarios...")
+        for a_name in agents:
+            for s in scenarios:
+                demo(s, a_name, live=args.live)
 
 if __name__ == "__main__":
     main()

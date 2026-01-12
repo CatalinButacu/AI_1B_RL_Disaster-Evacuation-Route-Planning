@@ -5,7 +5,7 @@ import random
 import sys
 sys.path.insert(0, '..')
 
-from env.hazard_dynamics import HazardDynamics, SCENARIOS
+from env.hazard import HazardDynamics, SCENARIOS
 import config
 
 
@@ -50,12 +50,16 @@ class EvacuationEnv(gym.Env):
         self.agent_pos = self.agent_positions[0] if self.agent_positions else (0, 0)
 
     def _generate_environment(self, fixed_exits=None, fixed_start=None):
+        # Use a local random generator for environment setup to ensure reproducibility
+        # without affecting the global random state used for agent exploration.
+        rng = random.Random(config.ENV_SEED)
+        
         self.obstacles = set()
         center = self.grid_size // 2
         for _ in range(self.num_obstacles):
             for attempt in range(20):
-                row = random.randint(1, self.grid_size - 2)
-                col = random.randint(1, self.grid_size - 2)
+                row = rng.randint(1, self.grid_size - 2)
+                col = rng.randint(1, self.grid_size - 2)
                 if abs(row - center) > 1 or abs(col - center) > 1:
                     if (row, col) not in self.obstacles:
                         self.obstacles.add((row, col))
@@ -70,7 +74,7 @@ class EvacuationEnv(gym.Env):
                 far_edges.append((self.grid_size - 1, i))
                 far_edges.append((i, self.grid_size - 1))
             far_edges = [e for e in far_edges if e not in self.obstacles]
-            random.shuffle(far_edges)
+            rng.shuffle(far_edges)
             for pos in far_edges[:self.num_exits]:
                 self.evacuation_zones.add(pos)
         
@@ -84,7 +88,7 @@ class EvacuationEnv(gym.Env):
                     pos = (row, col)
                     if pos not in self.obstacles and pos not in self.evacuation_zones:
                         available.append(pos)
-            random.shuffle(available)
+            rng.shuffle(available)
             self.agent_starts = available[:self.num_agents]
         
         self.agent_positions = list(self.agent_starts)
@@ -97,8 +101,12 @@ class EvacuationEnv(gym.Env):
         self.hazard.protected_zones = set(protected)
         self.hazard.reset(self.initial_hazards)
         
-        self._place_exits_opposite_hazard()
-        self._place_agents_safe()
+        if not hasattr(self, '_env_initialized') or not self._env_initialized:
+            self._place_exits_opposite_hazard()
+            self._env_initialized = True
+        
+        self.agent_positions = list(self.agent_starts)
+        self.agent_active = [True] * len(self.agent_starts)
         
         self.agent_pos = self.agent_positions[0] if self.agent_positions else (0, 0)
         self.hazard.protected_zones = set(list(self.evacuation_zones) + list(self.obstacles))
@@ -111,8 +119,14 @@ class EvacuationEnv(gym.Env):
         
         if hasattr(self.hazard, 'flood_origin'):
             origin_row, origin_col = self.hazard.flood_origin
-        elif hasattr(self.hazard, 'fire_center'):
-            origin_row, origin_col = self.hazard.fire_center
+        elif hasattr(self.hazard, 'fire_origin'):
+            origin_row, origin_col = self.hazard.fire_origin
+        elif hasattr(self.hazard, 'wave_centers') and self.hazard.wave_centers:
+            # For earthquake, use the first wave center as the primary threat origin
+            origin_row, origin_col = self.hazard.wave_centers[0]
+        elif hasattr(self.hazard, 'tornado_pos'):
+            # For tornado, use current position (though it moves)
+            origin_row, origin_col = int(self.hazard.tornado_pos[0]), int(self.hazard.tornado_pos[1])
         else:
             origin_row, origin_col = 0, 0
         
@@ -239,7 +253,14 @@ class EvacuationEnv(gym.Env):
                 elif pos in self.obstacles:
                     row_str += "# "
                 elif self.hazard.is_hazard(pos):
-                    row_str += "X "
+                    if self.hazard_scenario_name == 'tornado':
+                        row_str += "🌀"
+                    elif self.hazard_scenario_name == 'flood':
+                        row_str += "~~"
+                    elif self.hazard_scenario_name == 'fire':
+                        row_str += "^^"
+                    else:
+                        row_str += "XX "
                 else:
                     row_str += ". "
             grid.append(row_str)
@@ -250,9 +271,6 @@ class EvacuationEnv(gym.Env):
 
     def _pos_to_obs(self, pos: Tuple[int, int]) -> int:
         return pos[0] * self.grid_size + pos[1]
-
-    def _obs_to_pos(self, obs: int) -> Tuple[int, int]:
-        return (obs // self.grid_size, obs % self.grid_size)
 
     def _distance_to_nearest_exit(self, pos: Tuple[int, int]) -> int:
         if not self.evacuation_zones:

@@ -1,8 +1,9 @@
 # ENVIRONMENT SETTINGS
 GRID_SIZE = 20
 NUM_AGENTS = 15
-NUM_EXITS = 1
+NUM_EXITS = 3
 NUM_OBSTACLES = 10
+ENV_SEED = 42
 
 AGENT_START = None
 EVACUATION_ZONES = None
@@ -18,29 +19,36 @@ MAX_SPREAD_STEPS = GRID_SIZE * 3
 
 # REWARD STRUCTURE
 REWARD_STEP = -1
-REWARD_EVACUATION = 100
+REWARD_EVACUATION = 200
 REWARD_HAZARD = -50
 REWARD_WALL = -2
 REWARD_OBSTACLE = -2
 REWARD_COLLISION = -2
-REWARD_CLOSER_TO_EXIT = 3
-REWARD_FARTHER_FROM_EXIT = -1
+REWARD_CLOSER_TO_EXIT = 2
+REWARD_FARTHER_FROM_EXIT = -1.5
 
-# DYNA-Q HYPERPARAMETERS (Project #7: Dyna-Q, not Dyna-Q+)
-ALPHA = 0.15
+# DYNA-Q HYPERPARAMETERS
+ALPHA = 0.1
 GAMMA = 0.95
-EPSILON = 0.3
-EPSILON_DECAY = 0.999
-EPSILON_MIN = 0.05
-PLANNING_STEPS = 50
-KAPPA = 0.0  # 0 for Dyna-Q, >0 for Dyna-Q+
+EPSILON = 0.5
+EPSILON_DECAY = 0.9997
+EPSILON_MIN = 0.1
+PLANNING_STEPS = 5
+KAPPA = 0.0001
 
 # TRAINING SETTINGS
 NUM_EPISODES = 100
-MAX_STEPS_PER_EPISODE = GRID_SIZE * 4
+MAX_STEPS_PER_EPISODE = GRID_SIZE * 2
 EVAL_FREQUENCY = 100
 
 # PATHS
 OUTPUTS_DIR = "outputs"
-PLOTS_DIR = "outputs/plots"
-MODELS_DIR = "outputs/models"
+
+def get_agent_dir(agent_name: str) -> str:
+    return f"{OUTPUTS_DIR}/{agent_name}"
+
+def get_models_dir(agent_name: str) -> str:
+    return f"{get_agent_dir(agent_name)}/models"
+
+def get_plots_dir(agent_name: str) -> str:
+    return f"{get_agent_dir(agent_name)}/plots"
